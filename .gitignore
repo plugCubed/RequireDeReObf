@@ -1,0 +1,6 @@
+*.json
+node_modules/
+versions/*.js
+app.js
+app.beautified.js
+app.beautified.deobfuscated.js
