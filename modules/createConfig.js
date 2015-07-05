@@ -22,6 +22,9 @@ module.exports = function(args) {
         testingRule = 0,
         testingModule = 0;
 
+    var services = [];
+    var success = false;
+
     var ruleCheckers = {
         nameStart: require('./ruleCheckers/nameStart'),
         nameLength: require('./ruleCheckers/nameLength'),
@@ -140,8 +143,9 @@ module.exports = function(args) {
             var moduleVars = lines[0].split('(')[1].split(')')[0].split(',');
             for (i = 0; i < moduleVars.length; i++) {
                 var a = moduleVars[i].split('"').join('').trim();
-                if (a.length > 0 && a != '[]')
+                if (a.length > 0 && a != '[]') {
                     module.modules[a] = modules[i];
+                }
             }
         } catch (e) {
         }
@@ -207,6 +211,7 @@ module.exports = function(args) {
         lines.shift();
         lines.pop();
         module.content = lines.join("\n");
+
         return module;
     }
 
@@ -322,9 +327,12 @@ module.exports = function(args) {
             }
 
             if (matches.length > 1) {
-                console.dir(matches);
+                console.log("\n\n ===== MATCHES =====");
+                console.log(matches);
+                console.log("\n\n ===== RULE =====");
                 console.log(rule);
                 stats.failed++;
+                console.log("\n\n");
                 throw new Error('[OVERUSE]'.red + '[Rule #' + formatRuleNumber(a) + ']');
             } else if (matches.length === 0) {
                 stats.failed++;
@@ -354,43 +362,60 @@ module.exports = function(args) {
         console.log('[CREATE CONFIG]', 'Running rules on modules...');
     }
 
-    runRules();
+    try {
+        runRules();
+        success = true;
+    } catch (e) {
+        console.log('[ERROR] Stopping running rules - ' + e);
+    }
 
-    console.log('[CREATE CONFIG]', 'Creating config...');
-    for (i in modules) {
-        if (!modules.hasOwnProperty(i)) continue;
-        var module = modules[i],
-            translatedName = translate(module.name);
-        compare(module.name);
-        if (module.name != translatedName)
-            translationConfig[module.name] = translatedName;
-        module.name = translatedName;
-        for (var j in module.modules) {
-            if (!module.modules.hasOwnProperty(j)) continue;
-            try {
-                if (module.modules[j] != null) {
-                    translationConfig[module.modules[j]] = translate(module.modules[j]);
-                    module.modules[j] = translate(module.modules[j]);
+    if (success) {
+        console.log('[CREATE CONFIG]', 'Creating config...');
+        for (i in modules) {
+            if (!modules.hasOwnProperty(i)) continue;
+            var module = modules[i],
+                translatedName = translate(module.name);
+            compare(module.name);
+            if (module.name != translatedName)
+                translationConfig[module.name] = translatedName;
+            module.name = translatedName;
+            for (var j in module.modules) {
+                if (!module.modules.hasOwnProperty(j)) continue;
+                try {
+                    if (module.modules[j] != null) {
+                        translationConfig[module.modules[j]] = translate(module.modules[j]);
+                        module.modules[j] = translate(module.modules[j]);
+
+                        if (module.modules[j] == 'app/services/Service') {
+                            services.push({
+                                module: translatedName,
+                                type: module.variables.type != null ? module.variables.type : 'GET',
+                                route: module.variables.route,
+                                'this.route': module.variables['this.route']
+                            });
+                        }
+                    }
+                } catch (e) {
+                    console.log(module, e);
                 }
-            } catch (e) {
-                console.log(module, e);
             }
         }
+        console.log('[CREATE CONFIG]', 'Config created!');
+
+        fs.writeFileSync('deobfuscated.json', JSON.stringify(modules, null, 4));
+        fs.writeFileSync('config.json', JSON.stringify(translationConfig, null, 4));
+        fs.writeFileSync('config.tree.json', JSON.stringify(translations, null, 4));
+        fs.writeFileSync('services.json', JSON.stringify(services, null, 4));
+        fs.writeFileSync('untranslated.json', JSON.stringify(untranslated, null, 4));
+
+        console.log('[CREATE CONFIG] DONE!');
+
+        for (i in untranslated) {
+            if (!untranslated.hasOwnProperty(i)) continue;
+            stats.untranslated += untranslated[i].length;
+        }
+
+        console.log('Rules:', (stats.success + ' success').green + ',', (stats.failed + ' failed').red, '(' + Math.round(stats.success / (stats.success + stats.failed) * 100) + '% success)');
+        console.log('Strings:', (stats.translated + ' deobfuscated').green + ',', (stats.untranslated + ' obfuscated').red, '(' + Math.round(stats.translated / (stats.translated + stats.untranslated) * 100) + '% deobfuscated)');
     }
-    console.log('[CREATE CONFIG]', 'Config created!');
-
-    fs.writeFileSync('deobfuscated.json', JSON.stringify(modules, null, 4));
-    fs.writeFileSync('config.json', JSON.stringify(translationConfig, null, 4));
-    fs.writeFileSync('config.tree.json', JSON.stringify(translations, null, 4));
-    fs.writeFileSync('untranslated.json', JSON.stringify(untranslated, null, 4));
-
-    console.log('[CREATE CONFIG] DONE!');
-
-    for (i in untranslated) {
-        if (!untranslated.hasOwnProperty(i)) continue;
-        stats.untranslated += untranslated[i].length;
-    }
-
-    console.log('Rules:', (stats.success + ' success').green + ',', (stats.failed + ' failed').red, '(' + Math.round(stats.success / (stats.success + stats.failed) * 100) + '% success)');
-    console.log('Strings:', (stats.translated + ' deobfuscated').green + ',', (stats.untranslated + ' obfuscated').red, '(' + Math.round(stats.translated / (stats.translated + stats.untranslated) * 100) + '% deobfuscated)');
 };

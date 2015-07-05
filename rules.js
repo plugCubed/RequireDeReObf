@@ -23,7 +23,9 @@ function createDialog(id, name) {
 }
 
 function createService(type, endpoint, category, name, nameStart) {
-    var strings = [type];
+    var variables = type != 'GET' ? {type: type} : {};
+    var notVariables = type == 'GET' ? ['type'] : [];
+    var strings = [];
     if (typeof endpoint === 'string') strings.push(endpoint);
     else for (var i in endpoint) {
         if (endpoint.hasOwnProperty(i))
@@ -31,8 +33,10 @@ function createService(type, endpoint, category, name, nameStart) {
     }
     return {
         nameLength: 4,
-        modules: ['app/net/RPCGateway', 'app/services/Service'],
+        modules: ['app/services/Service'],
         strings: strings,
+        variables: variables,
+        notVariables: notVariables,
         nameStart: nameStart ? nameStart : 'app/services/',
         name: {
             2: category,
@@ -309,17 +313,19 @@ module.exports = [{
     createService('GET','auth/token','auth', 'GetTokenService'),
     createService('DELETE','auth/session','auth', 'DeleteSessionService'),
     createService('POST','auth/reset/me','auth', 'ResetSelfService'),
+    createService('POST','auth/login','auth', 'LoginService'),
 
     createService('GET','users/me','users', 'GetSelfService'),
     createService('GET','users/','users', 'GetUserService'),
     createService('POST','users/bulk','users', 'GetUsersService'),
     createService('PUT','users/avatar','users', 'ChangeAvatarService'),
     createService('GET','users/me/history','users', 'GetHistoryService'),
-    createService('PUT','users/status','users', 'ChangeStatusService'),
     createService('PUT','users/language','users', 'ChangeLanguageService'),
     createService('PUT','users/badge','users', 'ChangeBadgeService'),
     createService('GET','users/validate/','users', 'ValidateUsernameService'),
     createService('GET','users/me/transactions','users', 'GetTransactionsService'),
+    createService('PUT','users/settings','users', 'UpdateUserSettingsService'),
+    createService('POST','users/signup','users', 'CreateUserService'),
 
     createService('GET','rooms/history','community', 'GetRoomHistoryService'),
     createService('DELETE','chat/','community', 'DeleteChatService'),
@@ -327,13 +333,14 @@ module.exports = [{
     createService('POST','rooms/join','community', 'RoomJoinService'),
     createService('GET','rooms/state','community', 'RoomStateService'),
     createService('POST','votes','community', 'VoteService'),
-    createService('GET','rooms/favorites','community', 'GetRoomFavoritesService'),
-    createService('GET','rooms','community', 'GetRoomsService'),
+    createService('GET','rooms/favorites?page=','community', 'GetRoomFavoritesService'),
+    createService('GET','rooms?q=','community', 'GetRoomsService'),
     createService('POST','rooms/favorites','community', 'AddRoomFavoriteService'),
     createService('DELETE','rooms/favorites/','community', 'RemoveRoomFavoriteService'),
     createService('POST','rooms/update','community', 'UpdateRoomService'),
     createService('GET','rooms/me','community', 'GetOwnRoomsService'),
     createService('GET','rooms/validate/','community', 'ValidateRoomNameService'),
+    createService('POST','rooms/sos','community', 'SendSOSService'),
 
     createService('GET','ignores','ignores', 'GetIgnoresService'),
     createService('POST','ignores','ignores', 'AddIgnoreService'),
@@ -345,13 +352,14 @@ module.exports = [{
     createService('PUT','/media/move','playlist', 'MoveMediaService'),
     createService('PUT','/media/update','playlist', 'UpdateMediaService'),
     createService('GET','/media','playlist', 'GetMediasService'),
-    createService('GET','playlists/media?q=','playlist', 'SearchMediaService'),
     createService('GET','playlists','playlist', 'PlaylistSelectService'),
     createService('PUT','/activate','playlist', 'PlaylistActivateService'),
     createService('POST','playlists','playlist', 'PlaylistCreateService'),
     createService('DELETE','playlists/','playlist', 'PlaylistDeleteService'),
     createService('PUT', ['playlists/', '/rename'], 'playlist', 'PlaylistRenameService'),
     createService('PUT', ['playlists/', '/shuffle'], 'playlist', 'PlaylistShuffleService'),
+
+    createService('POST','gift','gift', 'SendGiftService'),
 
     createService('PUT','profile/blurb','profile', 'UpdateProfileBlurbService'),
 
@@ -639,7 +647,7 @@ module.exports = [{
     }
 }, {
     nameLength: 4,
-    strings: ['&start-index='],
+    strings: ['?v=2&alt=json&start-index='],
     nameStart: 'app/services/',
     name: {
         2: 'youtube',
