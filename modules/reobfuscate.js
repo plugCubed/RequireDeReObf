@@ -121,7 +121,7 @@ module.exports = function(args) {
     console.log('[REOBFUSCATE]', 'Finding modules...');
     for (var _define = 1; _define < defines.length; _define++) {
         module = getModule(_define);
-        if (!module.name || module.name === '' || ['jquery', 'lang/Lang', 'underscore'].indexOf(module.name) > 0) continue;
+        if (module.name == null || module.name === '' || ['jquery', 'lang/Lang', 'underscore'].indexOf(module.name) > 0) continue;
         if ((function() {
                 for (var _module in modules) {
                     if (modules.hasOwnProperty(_module) && modules[_module].name === module.name)
@@ -136,7 +136,7 @@ module.exports = function(args) {
     }
     for (var _require = 1; _require < requires.length; _require++) {
         module = getRequire(_require);
-        if (module.name === '' || ['jquery', 'lang/Lang', 'underscore'].indexOf(module.name) > 0) continue;
+        if (module.name == null || module.name === '' || ['jquery', 'lang/Lang', 'underscore'].indexOf(module.name) > 0) continue;
         if (args.verbose === true)
             console.log('[REOBFUSCATE] Found require:', module.name);
         modules.require.push(module);
