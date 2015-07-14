@@ -23,7 +23,7 @@ module.exports = function(args) {
     }
 
     function whitelistedModule(name) {
-        return name.indexOf('plugCubed/') === 0 || name.indexOf('hbs!') === 0 || ['module', 'jquery', 'underscore', 'sockjs', 'lang/Lang'].indexOf(name) > -1;
+        return name.indexOf('plugCubed/') === 0 || name.indexOf('hbs!') === 0 || ['module', 'jquery', 'underscore', 'sockjs', 'lang/Lang', 'backbone'].indexOf(name) > -1;
     }
 
     function translate(name) {
@@ -68,7 +68,7 @@ module.exports = function(args) {
             var moduleVars = lines[0].split('(')[1].split(')')[0].split(',');
             for (i = 0; i < moduleVars.length; i++) {
                 var a = moduleVars[i].split("'").join('').trim();
-                if (a.length > 0 && a != '[]' && ['jquery', 'lang/Lang', 'underscore'].indexOf(module.name) < 0)
+                if (a.length > 0 && a != '[]' && ['jquery', 'lang/Lang', 'underscore', 'backbone'].indexOf(module.name) < 0)
                     module.modules[a] = modules[i];
             }
         } catch (e) {
@@ -108,7 +108,7 @@ module.exports = function(args) {
                 var moduleVars = lines[0].indexOf('[') < 0 ? lines[0] : lines[0].split('(')[1].split(')')[0].split(',');
                 for (i = 0; i < moduleVars.length; i++) {
                     var a = moduleVars[i].split("'").join('').trim();
-                    if (a.length > 0 && a != '[]' && ['jquery', 'lang/Lang', 'underscore'].indexOf(module.name) < 0) {
+                    if (a.length > 0 && a != '[]' && ['jquery', 'lang/Lang', 'underscore', 'backbone'].indexOf(module.name) < 0) {
                         module.modules[a] = modules[i];
                     }
                 }
@@ -121,7 +121,7 @@ module.exports = function(args) {
     console.log('[REOBFUSCATE]', 'Finding modules...');
     for (var _define = 1; _define < defines.length; _define++) {
         module = getModule(_define);
-        if (module.name == null || module.name === '' || ['jquery', 'lang/Lang', 'underscore'].indexOf(module.name) > 0) continue;
+        if (module.name == null || module.name === '' || ['jquery', 'lang/Lang', 'underscore', 'backbone'].indexOf(module.name) > 0) continue;
         if ((function() {
                 for (var _module in modules) {
                     if (modules.hasOwnProperty(_module) && modules[_module].name === module.name)
@@ -136,7 +136,7 @@ module.exports = function(args) {
     }
     for (var _require = 1; _require < requires.length; _require++) {
         module = getRequire(_require);
-        if (module.name == null || module.name === '' || ['jquery', 'lang/Lang', 'underscore'].indexOf(module.name) > 0) continue;
+        if (module.name == null || module.name === '' || ['jquery', 'lang/Lang', 'underscore', 'backbone'].indexOf(module.name) > 0) continue;
         if (args.verbose === true)
             console.log('[REOBFUSCATE] Found require:', module.name);
         modules.require.push(module);
